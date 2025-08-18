@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload de Arquivos ZIP</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #8540b7 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .upload-container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 40px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            border: 3px solid #9dfc40;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            margin: 30px 0;
+        }
+        
+        .file-input-label {
+            display: block;
+            padding: 15px 20px;
+            background: #9dfc40;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            border: 2px solid #388E3C;
+        }
+        
+        .file-input-label:hover {
+            background: #388E3C;
+            transform: translateY(-2px);
+        }
+        
+        #fileInput {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .file-name {
+            margin: 15px 0;
+            font-size: 14px;
+            color: #555;
+        }
+        
+        #uploadButton {
+            background: #9dfc40;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            border: 2px solid #388E3C;
+        }
+        
+        #uploadButton:hover {
+            background: #388E3C;
+            transform: translateY(-2px);
+        }
+        
+        #uploadButton:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            border-color: #999;
+        }
+        
+        .status-message {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-top: 4px solid #9dfc40;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .progress-container {
+            width: 100%;
+            background-color: #f3f3f3;
+            border-radius: 5px;
+            margin: 10px 0;
+            position: relative;
+        }
+        
+        .progress-bar {
+            height: 20px;
+            background-color: #9dfc40;
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #333;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .file-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            position: relative;
+        }
+        
+        .remove-file {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            color: #ff0000;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+        <h1>Upload de Arquivos ZIP</h1>
+        <div class="file-input-wrapper">
+            <label class="file-input-label" for="fileInput">
+                Selecione arquivos ZIP
+            </label>
+            <input type="file" id="fileInput" accept=".zip" multiple>
+        </div>
+        <div id="fileList"></div>
+        <button id="uploadButton" disabled>Enviar para GCP</button>
+        <div class="spinner" id="spinner"></div>
+        <div class="status-message" id="statusMessage"></div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const uploadButton = document.getElementById('uploadButton');
+        const statusMessage = document.getElementById('statusMessage');
+        const spinner = document.getElementById('spinner');
+        let allFilesToUpload = [];
+        let eventSource = null;
+
+        // Função para atualizar a lista de exibição
+        function updateFileList() {
+            fileList.innerHTML = '';
+            
+            if (allFilesToUpload.length > 0) {
+                allFilesToUpload.forEach((file, index) => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `
+                        <div>
+                            <strong>${file.name}</strong> (${formatFileSize(file.size)})
+                            <span class="remove-file" data-index="${index}">✖</span>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bar" id="progress-${index}"></div>
+                            <div class="progress-text" id="progress-text-${index}">0% (0/0)</div>
+                        </div>
+                        <div id="status-${index}">Aguardando início...</div>
+                    `;
+                    fileList.appendChild(fileItem);
+                });
+                uploadButton.disabled = false;
+            } else {
+                uploadButton.disabled = true;
+            }
+            
+            // Adicionar event listeners para os botões de remover
+            document.querySelectorAll('.remove-file').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const index = parseInt(e.target.getAttribute('data-index'));
+                    allFilesToUpload.splice(index, 1);
+                    updateFileList();
+                });
+            });
+        }
+
+        fileInput.addEventListener('change', (event) => {
+            const newFiles = Array.from(event.target.files);
+            allFilesToUpload = [...allFilesToUpload, ...newFiles];
+            updateFileList();
+            fileInput.value = '';
+        });
+
+        uploadButton.addEventListener('click', async () => {
+            if (allFilesToUpload.length === 0) return;
+            
+            const formData = new FormData();
+            allFilesToUpload.forEach(file => {
+                formData.append('zipFiles', file);
+            });
+
+            // Reset UI
+            statusMessage.textContent = '';
+            statusMessage.className = 'status-message';
+            spinner.style.display = 'block';
+            uploadButton.disabled = true;
+            
+            try {
+                // 1. Iniciar processo de upload
+                const uploadResponse = await fetch('http://localhost:3000/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                // Verificar se a resposta é válida
+                if (!uploadResponse.ok) {
+                    const errorData = await uploadResponse.json();
+                    throw new Error(errorData.error || 'Erro no servidor');
+                }
+                
+                // 2. Obter sessionId da resposta
+                const { sessionId } = await uploadResponse.json();
+                console.log('Session ID recebido:', sessionId);
+                
+                // 3. Conectar ao SSE de progresso
+                eventSource = new EventSource(`http://localhost:3000/progress/${sessionId}`);
+                
+                // Ouvir eventos de progresso
+                eventSource.addEventListener('progress', (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        console.log('Evento Progress:', data);
+                        
+                        const zipIndex = allFilesToUpload.findIndex(f => f.name === data.zipId);
+                        if (zipIndex !== -1) {
+                            const progressBar = document.getElementById(`progress-${zipIndex}`);
+                            const progressText = document.getElementById(`progress-text-${zipIndex}`);
+                            const statusDiv = document.getElementById(`status-${zipIndex}`);
+                            
+                            if (progressBar && progressText && statusDiv) {
+                                progressBar.style.width = `${data.progress}%`;
+                                progressText.textContent = `${data.progress}% (${data.uploaded}/${data.totalFiles})`;
+                                statusDiv.textContent = `Enviando... ${data.uploaded}/${data.totalFiles} arquivos`;
+                            }
+                        }
+                    } catch (parseErr) {
+                        console.error('Erro ao analisar evento de progresso:', parseErr);
+                    }
+                });
+                
+                // Ouvir evento de conclusão
+                eventSource.addEventListener('completed', (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        console.log('Evento Completed:', data);
+                        
+                        statusMessage.textContent = '✅ Todos os arquivos foram processados com sucesso!';
+                        statusMessage.className = 'status-message success';
+                        spinner.style.display = 'none';
+                        
+                        // Gerar relatório Excel
+                        generateExcelReport(data);
+                        
+                        // Limpar lista após conclusão
+                        allFilesToUpload = [];
+                        updateFileList();
+                        
+                        eventSource.close();
+                    } catch (parseErr) {
+                        console.error('Erro ao analisar evento de conclusão:', parseErr);
+                    }
+                });
+                
+                // Ouvir evento de erro
+                eventSource.addEventListener('error', (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        console.log('Evento Error:', data);
+                        
+                        statusMessage.textContent = `❌ Erro: ${data.message || 'Erro no processamento'}`;
+                        statusMessage.className = 'status-message error';
+                        spinner.style.display = 'none';
+                        eventSource.close();
+                        uploadButton.disabled = false;
+                    } catch (parseErr) {
+                        console.error('Erro ao analisar evento de erro:', parseErr);
+                    }
+                });
+                
+                // Lidar com erros de conexão
+                eventSource.onerror = (err) => {
+                    console.error('Erro na conexão SSE:', err);
+                    statusMessage.textContent = '❌ Conexão com atualizações de progresso perdida';
+                    statusMessage.className = 'status-message error';
+                    spinner.style.display = 'none';
+                    if (eventSource) {
+                        eventSource.close();
+                    }
+                    uploadButton.disabled = false;
+                };
+                
+            } catch (err) {
+                console.error('Erro no envio:', err);
+                statusMessage.textContent = `❌ Erro no envio: ${err.message}`;
+                statusMessage.className = 'status-message error';
+                spinner.style.display = 'none';
+                if (eventSource) eventSource.close();
+                uploadButton.disabled = false;
+            }
+        });
+
+
+        function generateExcelReport(results) {
+            // Criar workbook e worksheet
+            const wb = new window.ExcelJS.Workbook();
+            const ws = wb.addWorksheet('Arquivos Enviados');
+            
+            // Definir cabeçalhos
+            ws.columns = [
+                { header: 'Arquivo', key: 'name', width: 40 },
+                { header: 'URL', key: 'url', width: 80 }
+            ];
+            
+            // Adicionar dados: percorrer cada ZIP
+            Object.values(results).forEach(zipResult => {
+                // zipResult.files é a lista de arquivos desse ZIP
+                zipResult.files.forEach(file => {
+                    ws.addRow({
+                        name: file.name,
+                        url: file.url
+                    });
+                });
+            });
+            
+            // Formatar como hyperlink
+            ws.getColumn('url').eachCell(cell => {
+                cell.value = { text: cell.value, hyperlink: cell.value };
+                cell.font = { color: { argb: 'FF0000FF' }, underline: true };
+            });
+            
+            // Baixar arquivo
+            wb.xlsx.writeBuffer().then(buffer => {
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'relatorio_arquivos.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            else return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+    </script>
+    <!-- Incluir ExcelJS para geração de relatórios -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+</body>
+</html>

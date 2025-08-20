@@ -256,7 +256,7 @@
             
             try {
                 // 1. Iniciar processo de upload
-                const uploadResponse = await fetch('http://localhost:3000/upload', {
+                const uploadResponse = await fetch('https://saeb-upload-vvzo2fdzdq-uc.a.run.app/upload', {
                     method: 'POST',
                     body: formData
                 });
@@ -272,7 +272,7 @@
                 console.log('Session ID recebido:', sessionId);
                 
                 // 3. Conectar ao SSE de progresso
-                eventSource = new EventSource(`http://localhost:3000/progress/${sessionId}`);
+                eventSource = new EventSource(`https://saeb-upload-vvzo2fdzdq-uc.a.run.app/progress/${sessionId}`);
                 
                 // Ouvir eventos de progresso
                 eventSource.addEventListener('progress', (event) => {

@@ -1,412 +1,328 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Upload de Arquivos ZIP</title>
-    <style>
-        body {
-            background: linear-gradient(135deg, #8540b7 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .upload-container {
-            background-color: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            padding: 40px;
-            width: 90%;
-            max-width: 500px;
-            text-align: center;
-            border: 3px solid #9dfc40;
-        }
-        
-        h1 {
-            color: #333;
-            margin-bottom: 30px;
-        }
-        
-        .file-input-wrapper {
-            position: relative;
-            margin: 30px 0;
-        }
-        
-        .file-input-label {
-            display: block;
-            padding: 15px 20px;
-            background: #9dfc40;
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            border: 2px solid #388E3C;
-        }
-        
-        .file-input-label:hover {
-            background: #388E3C;
-            transform: translateY(-2px);
-        }
-        
-        #fileInput {
-            position: absolute;
-            left: 0;
-            top: 0;
-            opacity: 0;
-            width: 100%;
-            height: 100%;
-            cursor: pointer;
-        }
-        
-        .file-name {
-            margin: 15px 0;
-            font-size: 14px;
-            color: #555;
-        }
-        
-        #uploadButton {
-            background: #9dfc40;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            font-size: 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: bold;
-            border: 2px solid #388E3C;
-        }
-        
-        #uploadButton:hover {
-            background: #388E3C;
-            transform: translateY(-2px);
-        }
-        
-        #uploadButton:disabled {
-            background: #cccccc;
-            cursor: not-allowed;
-            transform: none;
-            border-color: #999;
-        }
-        
-        .status-message {
-            margin-top: 25px;
-            padding: 15px;
-            border-radius: 8px;
-            font-weight: 500;
-        }
-        
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-top: 4px solid #9dfc40;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-            display: none;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .progress-container {
-            width: 100%;
-            background-color: #f3f3f3;
-            border-radius: 5px;
-            margin: 10px 0;
-            position: relative;
-        }
-        
-        .progress-bar {
-            height: 20px;
-            background-color: #9dfc40;
-            border-radius: 5px;
-            width: 0%;
-            transition: width 0.3s;
-        }
-        
-        .progress-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #333;
-            font-weight: bold;
-            font-size: 12px;
-        }
-        
-        .file-item {
-            margin-bottom: 15px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-            position: relative;
-        }
-        
-        .remove-file {
-            position: absolute;
-            top: 5px;
-            right: 10px;
-            color: #ff0000;
-            cursor: pointer;
-            font-weight: bold;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Upload ZIP SAEB</title>
+  <style>
+    body { background: linear-gradient(135deg, #8540b7 100%); min-height: 100vh; display:flex; justify-content:center; align-items:center; margin:0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .upload-container { background:#fff; border-radius:15px; box-shadow:0 10px 30px rgba(0,0,0,.2); padding:40px; width:90%; max-width:560px; border:3px solid #9dfc40; }
+    h1 { margin-top:0; }
+    .file-input-label, #uploadButton { display:inline-block; padding:12px 20px; background:#9dfc40; color:#fff; border:2px solid #388E3C; border-radius:8px; cursor:pointer; font-weight:600; }
+    .file-input-label:hover, #uploadButton:hover { background:#388E3C; transform: translateY(-2px); }
+    #fileInput { display:none; }
+    #uploadButton:disabled { background:#bbb; border-color:#999; cursor:not-allowed; transform:none; }
+    .file-item { margin: 10px 0; padding:10px; background:#f7f7f7; border:1px solid #e5e5e5; border-radius:6px; position:relative;}
+    .remove-file { position:absolute; right:10px; top:8px; color:#c00; font-weight:bold; cursor:pointer;}
+    .progress-container { width:100%; background:#eee; border-radius:5px; height:20px; margin-top:8px; position:relative;}
+    .progress-bar { height:20px; background:#9dfc40; border-radius:5px; width:0%; transition: width .2s; }
+    .progress-text { position:absolute; left:50%; top:50%; transform:translate(-50%, -50%); font-size:12px; color:#333; font-weight:bold;}
+    .status-message { margin-top:15px; padding:12px; border-radius:8px; }
+    .success { background:#d4edda; border:1px solid #c3e6cb; color:#155724; }
+    .error { background:#f8d7da; border:1px solid #f5c6cb; color:#721c24; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
-    <div class="upload-container">
-        <h1>Upload de Arquivos ZIP</h1>
-        <div class="file-input-wrapper">
-            <label class="file-input-label" for="fileInput">
-                Selecione arquivos ZIP
-            </label>
-            <input type="file" id="fileInput" accept=".zip" multiple>
-        </div>
-        <div id="fileList"></div>
-        <button id="uploadButton" disabled>Enviar para GCP</button>
-        <div class="spinner" id="spinner"></div>
-        <div class="status-message" id="statusMessage"></div>
-    </div>
+  <div class="upload-container">
+    <h1>Upload ZIP SAEB</h1>
+    <label for="fileInput" class="file-input-label">Selecionar ZIPs</label>
+    <input type="file" id="fileInput" multiple accept=".zip" />
+    <div id="fileList"></div>
+    <button id="uploadButton" disabled>Enviar & Processar</button>
+    <div id="statusMessage" class="status-message"></div>
+    <div id="statusMessage" class="status-message"></div>
+    <!-- NOVO: painel de resumo -->
+    <div id="summaryPanel" class="status-message" style="display:none;"></div>
+  </div>
 
-    <script>
-        const fileInput = document.getElementById('fileInput');
-        const fileList = document.getElementById('fileList');
-        const uploadButton = document.getElementById('uploadButton');
-        const statusMessage = document.getElementById('statusMessage');
-        const spinner = document.getElementById('spinner');
-        let allFilesToUpload = [];
-        let eventSource = null;
+  <script>
+    const API_BASE = 'https://saeb-upload-290679812219.us-central1.run.app'; // se servir via o mesmo domínio do Cloud Run, deixe vazio. Ou coloque a URL do backend.
+    const fileInput = document.getElementById('fileInput');
+    const fileList = document.getElementById('fileList');
+    const uploadButton = document.getElementById('uploadButton');
+    const statusMessage = document.getElementById('statusMessage');
 
-        // Função para atualizar a lista de exibição
-        function updateFileList() {
-            fileList.innerHTML = '';
-            
-            if (allFilesToUpload.length > 0) {
-                allFilesToUpload.forEach((file, index) => {
-                    const fileItem = document.createElement('div');
-                    fileItem.className = 'file-item';
-                    fileItem.innerHTML = `
-                        <div>
-                            <strong>${file.name}</strong> (${formatFileSize(file.size)})
-                            <span class="remove-file" data-index="${index}">✖</span>
-                        </div>
-                        <div class="progress-container">
-                            <div class="progress-bar" id="progress-${index}"></div>
-                            <div class="progress-text" id="progress-text-${index}">0% (0/0)</div>
-                        </div>
-                        <div id="status-${index}">Aguardando início...</div>
-                    `;
-                    fileList.appendChild(fileItem);
-                });
-                uploadButton.disabled = false;
-            } else {
-                uploadButton.disabled = true;
-            }
-            
-            // Adicionar event listeners para os botões de remover
-            document.querySelectorAll('.remove-file').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const index = parseInt(e.target.getAttribute('data-index'));
-                    allFilesToUpload.splice(index, 1);
-                    updateFileList();
-                });
-            });
+    let files = [];
+    let sessionId = crypto.randomUUID();
+    let eventSource = null;
+    let overallStartMs = null;
+    let totalZipsSelected = 0;
+
+    fileInput.addEventListener('change', () => {
+      files = [...files, ...Array.from(fileInput.files)];
+      renderFiles();
+      fileInput.value = '';
+    });
+
+    function renderFiles() {
+      fileList.innerHTML = '';
+      if (files.length === 0) {
+        uploadButton.disabled = true;
+        return;
+      }
+      uploadButton.disabled = false;
+      files.forEach((f, i) => {
+        const item = document.createElement('div');
+        item.className = 'file-item';
+        item.innerHTML = `
+          <strong>${f.name}</strong> (${formatFileSize(f.size)})
+          <span class="remove-file" data-i="${i}">✖</span>
+          <div class="progress-container">
+            <div class="progress-bar" id="bar-${i}"></div>
+            <div class="progress-text" id="txt-${i}">0%</div>
+          </div>
+        `;
+        fileList.appendChild(item);
+      });
+      document.querySelectorAll('.remove-file').forEach(el => {
+        el.onclick = (e) => {
+          const idx = +e.target.dataset.i;
+          files.splice(idx, 1);
+          renderFiles();
+        };
+      });
+    }
+
+    uploadButton.addEventListener('click', async () => {
+      if (files.length === 0) return;
+      uploadButton.disabled = true;
+      statusMessage.className = 'status-message';
+      statusMessage.textContent = 'Iniciando uploads…';
+
+      try {
+        overallStartMs = performance.now();
+        totalZipsSelected = files.length;
+        document.getElementById('summaryPanel').style.display = 'none';
+        document.getElementById('summaryPanel').textContent = '';
+        // 1) Para cada arquivo, inicia sessão resumable e envia
+        const objectNames = [];
+        for (let i = 0; i < files.length; i++) {
+          const f = files[i];
+          const meta = await getSignedUrl(f);
+          const sessionUrl = await startResumableSession(meta.uploadUrl, f);
+          await uploadWithProgress(sessionUrl, f, i);
+          objectNames.push(meta.objectName);
         }
 
-        fileInput.addEventListener('change', (event) => {
-            const newFiles = Array.from(event.target.files);
-            allFilesToUpload = [...allFilesToUpload, ...newFiles];
-            updateFileList();
-            fileInput.value = '';
+        statusMessage.textContent = 'Uploads concluídos. Iniciando processamento…';
+
+        // 2) Abre SSE para progresso
+        if (eventSource) eventSource.close();
+        eventSource = new EventSource(`${API_BASE}/progress/${sessionId}`);
+
+        eventSource.addEventListener('progress', evt => {
+          const data = JSON.parse(evt.data);
+          const idx = files.findIndex(ff => ff.name === data.zipId);
+          if (idx >= 0) {
+            const bar = document.getElementById(`bar-${idx}`);
+            const txt = document.getElementById(`txt-${idx}`);
+            if (bar) bar.style.width = `${data.progress}%`;
+            if (txt) txt.textContent = `${data.progress}% (${data.uploaded}/${data.totalFiles})`;
+          }
         });
 
-        uploadButton.addEventListener('click', async () => {
-            if (allFilesToUpload.length === 0) return;
-            
-            const formData = new FormData();
-            allFilesToUpload.forEach(file => {
-                formData.append('zipFiles', file);
-            });
+        eventSource.addEventListener('completed', evt => {
+          const payload = JSON.parse(evt.data);
+          // suporte a 2 formatos: antigo (results puro) ou novo (results + summary)
+          const results = payload.results || payload;
+          const summary = payload.summary || null;
+          const summaryFromBackend = payload.summary || null;
 
-            // Reset UI
-            statusMessage.textContent = '';
-            statusMessage.className = 'status-message';
-            spinner.style.display = 'block';
-            uploadButton.disabled = true;
-            
-            try {
-                // 1. Iniciar processo de upload
-                const uploadResponse = await fetch('https://saeb-upload-vvzo2fdzdq-uc.a.run.app/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                // Verificar se a resposta é válida
-                if (!uploadResponse.ok) {
-                    const errorData = await uploadResponse.json();
-                    throw new Error(errorData.error || 'Erro no servidor');
-                }
-                
-                // 2. Obter sessionId da resposta
-                const { sessionId } = await uploadResponse.json();
-                console.log('Session ID recebido:', sessionId);
-                
-                // 3. Conectar ao SSE de progresso
-                eventSource = new EventSource(`https://saeb-upload-vvzo2fdzdq-uc.a.run.app/progress/${sessionId}`);
-                
-                // Ouvir eventos de progresso
-                eventSource.addEventListener('progress', (event) => {
-                    try {
-                        const data = JSON.parse(event.data);
-                        console.log('Evento Progress:', data);
-                        
-                        const zipIndex = allFilesToUpload.findIndex(f => f.name === data.zipId);
-                        if (zipIndex !== -1) {
-                            const progressBar = document.getElementById(`progress-${zipIndex}`);
-                            const progressText = document.getElementById(`progress-text-${zipIndex}`);
-                            const statusDiv = document.getElementById(`status-${zipIndex}`);
-                            
-                            if (progressBar && progressText && statusDiv) {
-                                progressBar.style.width = `${data.progress}%`;
-                                progressText.textContent = `${data.progress}% (${data.uploaded}/${data.totalFiles})`;
-                                statusDiv.textContent = `Enviando... ${data.uploaded}/${data.totalFiles} arquivos`;
-                            }
-                        }
-                    } catch (parseErr) {
-                        console.error('Erro ao analisar evento de progresso:', parseErr);
-                    }
-                });
-                
-                // Ouvir evento de conclusão
-                eventSource.addEventListener('completed', (event) => {
-                    try {
-                        const data = JSON.parse(event.data);
-                        console.log('Evento Completed:', data);
-                        
-                        statusMessage.textContent = '✅ Todos os arquivos foram processados com sucesso!';
-                        statusMessage.className = 'status-message success';
-                        spinner.style.display = 'none';
-                        
-                        // Gerar relatório Excel
-                        generateExcelReport(data);
-                        
-                        // Limpar lista após conclusão
-                        allFilesToUpload = [];
-                        updateFileList();
-                        
-                        eventSource.close();
-                    } catch (parseErr) {
-                        console.error('Erro ao analisar evento de conclusão:', parseErr);
-                    }
-                });
-                
-                // Ouvir evento de erro
-                eventSource.addEventListener('error', (event) => {
-                    try {
-                        const data = JSON.parse(event.data);
-                        console.log('Evento Error:', data);
-                        
-                        statusMessage.textContent = `❌ Erro: ${data.message || 'Erro no processamento'}`;
-                        statusMessage.className = 'status-message error';
-                        spinner.style.display = 'none';
-                        eventSource.close();
-                        uploadButton.disabled = false;
-                    } catch (parseErr) {
-                        console.error('Erro ao analisar evento de erro:', parseErr);
-                    }
-                });
-                
-                // Lidar com erros de conexão
-                eventSource.onerror = (err) => {
-                    console.error('Erro na conexão SSE:', err);
-                    statusMessage.textContent = '❌ Conexão com atualizações de progresso perdida';
-                    statusMessage.className = 'status-message error';
-                    spinner.style.display = 'none';
-                    if (eventSource) {
-                        eventSource.close();
-                    }
-                    uploadButton.disabled = false;
-                };
-                
-            } catch (err) {
-                console.error('Erro no envio:', err);
-                statusMessage.textContent = `❌ Erro no envio: ${err.message}`;
-                statusMessage.className = 'status-message error';
-                spinner.style.display = 'none';
-                if (eventSource) eventSource.close();
-                uploadButton.disabled = false;
-            }
+          // 1) total processado (arquivos internos)
+          let totalProcessed = 0;
+          Object.values(results).forEach(zip => {
+            totalProcessed += (zip.files || []).length;
+          });
+
+          // 2) tempo total (upload + processamento)
+          const elapsedMs = Math.max(0, (performance.now() - (overallStartMs || performance.now())));
+          const elapsedSec = (elapsedMs / 1000).toFixed(2);
+
+          statusMessage.className = 'status-message success';
+          statusMessage.textContent = '✅ Processamento concluído!';
+          downloadReportXLSX(results, summary);
+
+          // 3) Monta o painel de resumo
+          const summaryPanel = document.getElementById('summaryPanel');
+          summaryPanel.style.display = 'block';
+          const zipsCount = totalZipsSelected; // zips efetivamente enviados
+          const processedCount = summaryFromBackend?.filesProcessed ?? totalProcessed;
+          const niceTime =
+            summaryFromBackend?.elapsedMs != null
+              ? (summaryFromBackend.elapsedMs / 1000).toFixed(2)
+              : elapsedSec;
+
+          summaryPanel.className = 'status-message';
+          summaryPanel.innerHTML = `
+            <div style="background:#e9f7ff;border:1px solid #b6e0ff;color:#084c61;border-radius:8px;padding:12px;">
+              <div style="font-weight:700;margin-bottom:6px;">Resumo do processo</div>
+              <div>⏱️ Tempo total: <strong>${niceTime}s</strong></div>
+              <div>📦 ZIPs enviados: <strong>${zipsCount}</strong></div>
+              <div>🗂️ Arquivos processados: <strong>${processedCount}</strong></div>
+            </div>
+          `;
+
+          if (eventSource) eventSource.close();
+          files = [];
+          renderFiles();
+          uploadButton.disabled = false; // permite novo ciclo
         });
 
+        eventSource.addEventListener('error', evt => {
+          let msg = 'Erro no processamento';
+          try { msg = JSON.parse(evt.data).message || msg; } catch {}
+          statusMessage.className = 'status-message error';
+          statusMessage.textContent = '❌ ' + msg;
+          if (eventSource) eventSource.close();
+          uploadButton.disabled = false;
+        });
 
-        function generateExcelReport(results) {
-            // Criar workbook e worksheet
-            const wb = new window.ExcelJS.Workbook();
-            const ws = wb.addWorksheet('Arquivos Enviados');
-            
-            // Definir cabeçalhos
-            ws.columns = [
-                { header: 'Arquivo', key: 'name', width: 40 },
-                { header: 'URL', key: 'url', width: 80 }
-            ];
-            
-            // Adicionar dados: percorrer cada ZIP
-            Object.values(results).forEach(zipResult => {
-                // zipResult.files é a lista de arquivos desse ZIP
-                zipResult.files.forEach(file => {
-                    ws.addRow({
-                        name: file.name,
-                        url: file.url
-                    });
-                });
-            });
-            
-            // Formatar como hyperlink
-            ws.getColumn('url').eachCell(cell => {
-                cell.value = { text: cell.value, hyperlink: cell.value };
-                cell.font = { color: { argb: 'FF0000FF' }, underline: true };
-            });
-            
-            // Baixar arquivo
-            wb.xlsx.writeBuffer().then(buffer => {
-                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'relatorio_arquivos.xlsx';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            });
-        }
+        // 3) Chama processamento no backend (streaming do ZIP do GCS)
+        await fetch(`${API_BASE}/process`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId, objects: objectNames })
+        });
 
-        function formatFileSize(bytes) {
-            if (bytes < 1024) return bytes + ' B';
-            else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-            else return (bytes / 1048576).toFixed(1) + ' MB';
+      } catch (err) {
+        statusMessage.className = 'status-message error';
+        statusMessage.textContent = '❌ ' + (err.message || 'Falha no envio');
+        uploadButton.disabled = false;
+      }
+    });
+
+    async function getSignedUrl(file) {
+      console.log('[upload] requesting signed-url for', file && file.name);
+      const qs = new URLSearchParams({
+        fileName: file.name,
+        contentType: file.type || 'application/zip',
+        sessionId
+      });
+      const r = await fetch(`${API_BASE}/signed-url?${qs.toString()}`);
+      if (!r.ok) throw new Error('Falha ao obter Signed URL');
+      return r.json(); // {uploadUrl, objectName}
+    }
+
+    async function startResumableSession(uploadUrl, file) {
+      const ct = file.type || 'application/zip';
+      const r = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: {
+          'x-goog-resumable': 'start',
+          'Content-Type': ct
         }
-    </script>
-    <!-- Incluir ExcelJS para geração de relatórios -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+      });
+      if (!r.ok) {
+        const msg = await r.text().catch(()=>''); 
+        throw new Error('Falha ao iniciar sessão resumable: ' + r.status + ' ' + msg);
+      }
+      const loc = r.headers.get('location') || r.headers.get('Location');
+      if (!loc) {
+        throw new Error('Header Location não visível (verifique CORS do bucket para expor "Location")');
+      }
+      return loc;
+    }
+
+    function uploadWithProgress(sessionUrl, file, index) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', sessionUrl, true);
+
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const pct = Math.round((e.loaded / e.total) * 100);
+            const bar = document.getElementById(`bar-${index}`);
+            const txt = document.getElementById(`txt-${index}`);
+            if (bar) bar.style.width = pct + '%';
+            if (txt) txt.textContent = pct + '%';
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve();
+          else reject(new Error('Falha no upload resumable'));
+        };
+        xhr.onerror = () => reject(new Error('Erro de rede no upload'));
+
+        xhr.send(file);
+      });
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    function downloadReport(results) {
+      // Gera CSV simples com nome;url
+      let lines = ['Arquivo,URL'];
+      Object.values(results).forEach(zip => {
+        zip.files.forEach(f => {
+          lines.push(`"${f.name}","${f.url}"`);
+        });
+      });
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'relatorio_arquivos.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  
+    function downloadReportXLSX(results, summary) {
+      // Primeira aba: Detalhes de todos os arquivos
+      const rowsDetails = [["Arquivo", "URL", "Status"]];
+      Object.values(results).forEach(zip => {
+        (zip.files || []).forEach(f => {
+          const url = (f.url || "");
+          const status = f.status === 'success' ? '✅ Sucesso' : '❌ Falha';
+          rowsDetails.push([f.name || "", url, status]);
+        });
+      });
+
+      // Segunda aba: Resumo por ZIP
+      const rowsSummary = [["Nome do ZIP", "Total de Arquivos", "Sucesso", "Falhas", "Status"]];
+      if (summary && summary.zipStatus) {
+        Object.entries(summary.zipStatus).forEach(([zipName, stats]) => {
+          const status = stats.failed === 0 ? '✅ Completo' : '⚠️ Parcial';
+          rowsSummary.push([
+            zipName, 
+            stats.total, 
+            stats.success, 
+            stats.failed,
+            status
+          ]);
+        });
+        
+        // Adicionar linha de totais
+        rowsSummary.push([]);
+        rowsSummary.push([
+          "TOTAL GERAL",
+          summary.filesProcessed + summary.filesFailed,
+          summary.filesProcessed,
+          summary.filesFailed,
+          summary.filesFailed === 0 ? '✅ Todos processados' : '⚠️ Com falhas'
+        ]);
+      }
+
+      const wb = XLSX.utils.book_new();
+      const wsDetails = XLSX.utils.aoa_to_sheet(rowsDetails);
+      const wsSummary = XLSX.utils.aoa_to_sheet(rowsSummary);
+
+      // Ajustar largura das colunas
+      wsDetails["!cols"] = [{wch: 40}, {wch: 80}, {wch: 15}];
+      wsSummary["!cols"] = [{wch: 40}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 20}];
+
+      XLSX.utils.book_append_sheet(wb, wsDetails, "Detalhes dos Arquivos");
+      XLSX.utils.book_append_sheet(wb, wsSummary, "Resumo por ZIP");
+
+      XLSX.writeFile(wb, "relatorio_processamento.xlsx");
+    }
+    
+</script>
 </body>
 </html>
